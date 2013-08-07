@@ -2,7 +2,7 @@ package org.quuux.orm;
 
 import android.content.Context;
 
-public class Query {
+public class Query implements Clause {
 
     protected final Session mSession;
     protected final Class<? extends Entity> mEntity;

@@ -19,11 +19,19 @@ public class Session {
     }
 
     public Query query(final Class<? extends Entity> klass) {
+        if (isDirty())
+            flush();
+
         return new Query(this, klass);
     }
 
     public void add(final Entity e) {
         mPendingInsertion.add(e);
+    }
+
+    public void add(final List<Entity> entities) {
+        for (final Entity e : entities)
+            add(e);
     }
 
     public void delete(final Entity e) {

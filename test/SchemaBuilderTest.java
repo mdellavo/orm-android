@@ -103,6 +103,18 @@ public class SchemaBuilderTest {
         session.commit();
     }
 
+    @Test
+    public void testQueryBuilder() throws Exception {
+
+        final QueryBuilder query = new QueryBuilder(
+                new QueryBuilder("foo=?", "bar=?"),
+                new QueryBuilder("baz=?", "qux=?"),
+                new Literal("quuux=?")
+        );
+        Log.d(TAG, "query = %s", query.toSql());
+
+    }
+
 }
 
 

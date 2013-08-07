@@ -7,6 +7,7 @@ There is a very basic smoke test in the test directory which serves as an exampl
 TODO
  - a better name
  - Flesh out the rest of the Connection/Session/etc
+ - Build out query and some query builder utils (func stuff)
  - Clean up and refactor SchemaBuilder
  - Serializer, deserializer interface
  - Relations
