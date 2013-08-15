@@ -16,17 +16,21 @@ public class QueryBuilder implements Clause {
 
     public QueryBuilder() {}
 
-    public QueryBuilder(final Clause... clauses) {
-        for (final Clause clause : clauses)
+    public QueryBuilder(final Object... clauses) {
+        for (final Object clause : clauses)
             add(clause);
     }
 
-    public QueryBuilder(final String... clauses) {
-        for (final String clause : clauses)
-            add(clause);
-    }
+    public QueryBuilder add(final Object object) {
+        Clause clause = null;
 
-    public QueryBuilder add(final Clause clause) {
+        if (object instanceof Clause)
+            clause = (Clause) object;
+        else if (object instanceof String)
+            clause = new Literal((String)object);
+        else
+            throw new IllegalArgumentException("Unknown object type added to query builder");
+
         mClauses.add(clause);
         return this;
     }

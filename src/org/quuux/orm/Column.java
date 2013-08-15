@@ -14,4 +14,5 @@ public @interface Column {
     boolean unique() default false;
     String check() default "";
     String defaultValue() default "";
+    Class<? extends Entity> foreignKey() default Entity.class;
 }

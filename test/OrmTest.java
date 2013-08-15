@@ -8,11 +8,12 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
+import java.util.Date;
 import java.util.List;
 
 @Config(shadows = {ShadowLog.class })
 @RunWith(RobolectricTestRunner.class)
-public class SchemaBuilderTest {
+public class OrmTest {
 
     private static final String TAG = "SchemaBuilderTest";
 
@@ -21,8 +22,13 @@ public class SchemaBuilderTest {
         ShadowLog.stream = System.out;
     }
 
+    interface UserRelations {
+        @Relation(Score.class)
+        void getScores(QueryListener<Score> listener);
+    }
+
     @Table(name="users")
-    public  static class User implements Entity {
+    public abstract static class User implements Entity, UserRelations {
 
         public User() {}
 
@@ -49,6 +55,29 @@ public class SchemaBuilderTest {
         }
 
     }
+
+    @Table(name="scores")
+    public static class Score implements Entity {
+
+        interface Relationships {
+            @Relation(User.class)
+            public void getUser(FetchListener<User> listener);
+        }
+
+        public Score() {}
+
+        @Column(primaryKey = true)
+        private long id = -1;
+        private Date date;
+        private int score;
+
+        @Column(foreignKey = User.class)
+        private long userId;
+
+
+    }
+
+
     android.content.Context context;
 
     @Test
@@ -61,6 +90,7 @@ public class SchemaBuilderTest {
     @Test
     public void testCreateAll() throws Exception {
         Database.attach(User.class);
+        Database.attach(Score.class);
         Database db = Database.getInstance(Robolectric.application, "test.db", 1);
         db.getWritableDatabase();
     }
@@ -68,9 +98,11 @@ public class SchemaBuilderTest {
     @Test
     public void testAddObject() throws Exception {
         Database.attach(User.class);
+        Database.attach(Score.class);
         Database db = Database.getInstance(Robolectric.application, "test.db", 1);
+        db.getWritableDatabase();
         final Session session = db.createSession();
-        final User u = new User("foo");
+        final User u = Session.create(User.class);
         session.add(u);
         session.commit();
 
@@ -109,9 +141,14 @@ public class SchemaBuilderTest {
         final QueryBuilder query = new QueryBuilder(
                 new QueryBuilder("foo=?", "bar=?"),
                 new QueryBuilder("baz=?", "qux=?"),
-                new Literal("quuux=?")
+                "quuux=?"
         );
         Log.d(TAG, "query = %s", query.toSql());
+
+    }
+
+    @Test
+    public void testRelations() throws Exception {
 
     }
 

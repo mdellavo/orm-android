@@ -1,7 +1,5 @@
 package org.quuux.orm;
 
-import android.util.Log;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -221,6 +219,9 @@ public class SchemaBuilder {
     }
 
     public static String renderReplace(final Entity e) {
+
+        Log.d(TAG, "e = %s", e);
+
         final Table table = getTable(e.getClass());
         final Field[] fields = e.getClass().getDeclaredFields();
 
