@@ -1,10 +1,7 @@
 package org.quuux.orm;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 // this is a mess...
@@ -14,9 +11,8 @@ import java.util.Map;
 
 public class SchemaBuilder {
 
-    private static final String EMPTY = "";
     private static final String TAG = "org.quuux.orm.SchemaBuilder";
-
+    private static final String EMPTY = "";
 
     enum SqlType {
         INTEGER,
@@ -48,6 +44,7 @@ public class SchemaBuilder {
         typeMap.put(void.class, SqlType.NONE);
         typeMap.put(Short.class, SqlType.INTEGER);
         typeMap.put(short.class, SqlType.INTEGER);
+        typeMap.put(Date.class, SqlType.TEXT);
     }
 
     public static Table getTable(final Class<? extends Entity> entity) {
@@ -61,8 +58,31 @@ public class SchemaBuilder {
         return getTable(e.getClass());
     }
 
+    public static boolean isColumn(final Field field) {
+        return field.isAnnotationPresent(Column.class);
+    }
+
+
     public static Column getColumn(final Field field) {
-        return field.isAnnotationPresent(Column.class) ? field.getAnnotation(Column.class) : null;
+        return isColumn(field) ? field.getAnnotation(Column.class) : null;
+    }
+
+    public static Field findForeignKey(final Class<? extends Entity> entity, final Class<? extends Entity> foreign) {
+        final Field[] fields = entity.getDeclaredFields();
+
+        for (int i = 0; i<fields.length; i++) {
+            final Field field = fields[i];
+
+            if (!isColumn(field))
+                continue;
+
+            final Column column = getColumn(field);
+
+            if (column.foreignKey() == foreign)
+                return fields[i];
+        }
+
+        return null;
     }
 
     public static String renderCreateTable(Class<? extends Entity> entity) {
@@ -76,6 +96,10 @@ public class SchemaBuilder {
 
         for (int i = 0; i<fields.length; i++) {
             final Field field = fields[i];
+
+            if (!isColumn(field))
+                continue;
+
             sb.append("    ");
             sb.append(renderColumn(field));
 
@@ -126,6 +150,8 @@ public class SchemaBuilder {
     }
 
     public static String getColumnName(final Field field) {
+        if (!isColumn(field))
+            return null;
         final Column column = getColumn(field);
         return getColumnName(field, column);
     }
@@ -220,8 +246,6 @@ public class SchemaBuilder {
 
     public static String renderReplace(final Entity e) {
 
-        Log.d(TAG, "e = %s", e);
-
         final Table table = getTable(e.getClass());
         final Field[] fields = e.getClass().getDeclaredFields();
 
@@ -229,9 +253,27 @@ public class SchemaBuilder {
 
         sb.append("INSERT OR REPLACE INTO ");
         sb.append(table.name());
+        sb.append("(");
+
+        for (int i=0; i<fields.length; i++) {
+
+            if (!isColumn(fields[i]))
+                continue;
+
+            sb.append(getColumnName(fields[i]));
+
+            if (i<fields.length-1)
+                sb.append(", ");
+        }
+
+        sb.append(")");
+
         sb.append(" VALUES (");
 
         for (int i=0; i<fields.length; i++) {
+
+            if (!isColumn(fields[i]))
+                continue;
 
             sb.append("?");
             if (i<fields.length-1)
@@ -249,6 +291,9 @@ public class SchemaBuilder {
         final Field[] fields = e.getClass().getDeclaredFields();
 
         for (final Field f : fields) {
+
+            if (!isColumn(f))
+                continue;
 
             f.setAccessible(true);
 
@@ -277,7 +322,7 @@ public class SchemaBuilder {
         return String.format("DELETE FROM %s WHERE %s = ?", table.name(), columnName);
     }
 
-    private static Field getPrimaryKey(final Class<? extends Entity> entity) {
+    public static Field getPrimaryKey(final Class<? extends Entity> entity) {
         final Field[] fields = entity.getDeclaredFields();
         for (final Field f : fields) {
             final Column column = getColumn(f);
@@ -288,7 +333,7 @@ public class SchemaBuilder {
         return null;
     }
 
-    private static Field getPrimaryKey(final Entity e) {
+    public static Field getPrimaryKey(final Entity e) {
         return getPrimaryKey(e.getClass());
     }
 
@@ -305,6 +350,9 @@ public class SchemaBuilder {
         sb.append("SELECT ");
 
         for(int i=0; i<fields.length; i++) {
+            if (!isColumn(fields[i]))
+                continue;
+
             sb.append(getColumnName(fields[i]));
             if (i<fields.length-1)
                 sb.append(", ");
@@ -343,6 +391,8 @@ public class SchemaBuilder {
         sb.append(" = ?");
         return sb.toString();
     }
+
+
 
 
 }

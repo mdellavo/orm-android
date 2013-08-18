@@ -61,6 +61,10 @@ public class QueryTask<T extends Entity> extends AsyncTask<Object, Void, List<T>
             // FIXME move elsewhere
             final Field[] fields = mQuery.getEntity().getDeclaredFields();
             for (final Field f : fields) {
+
+                if (!SchemaBuilder.isColumn(f))
+                    continue;
+
                 final String columnName = SchemaBuilder.getColumnName(f);
                 final SchemaBuilder.SqlType sqlType = SchemaBuilder.mapType(f);
                 final Class<?> type = f.getType();

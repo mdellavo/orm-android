@@ -1,9 +1,5 @@
 package org.quuux.orm;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,42 +24,6 @@ public class Session {
             flush();
 
         return new Query(this, klass);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T extends Entity> T create(final Class<? extends Entity> klass, Object... args) {
-
-
-        try {
-            final T obj =  (T) klass.getConstructor().newInstance();
-
-            return (T) Proxy.newProxyInstance(klass.getClassLoader(),  klass.getInterfaces(), new InvocationHandler() {
-                @Override
-                public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-
-                    final Relation relation = method.getAnnotation(Relation.class);
-
-                    if (relation != null ) {
-                        Log.d(TAG, "HOMG A RELATION!");
-                    }
-
-                    return method.invoke(obj, args);
-                }
-            });
-
-        } catch (InstantiationException e) {
-            Log.e(TAG, "Could not create instance of %s: %s", klass, e);
-            return null;
-        } catch (IllegalAccessException e) {
-            Log.e(TAG, "Could not create instance of %s: %s", klass, e);
-            return null;
-        } catch (InvocationTargetException e) {
-            Log.e(TAG, "Could not create instance of %s: %s", klass, e);
-            return null;
-        } catch (NoSuchMethodException e) {
-            Log.e(TAG, "Could not create instance of %s: %s", klass, e);
-            return null;
-        }
     }
 
     public void add(final Entity e) {

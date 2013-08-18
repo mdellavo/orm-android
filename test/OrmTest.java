@@ -22,13 +22,8 @@ public class OrmTest {
         ShadowLog.stream = System.out;
     }
 
-    interface UserRelations {
-        @Relation(Score.class)
-        void getScores(QueryListener<Score> listener);
-    }
-
     @Table(name="users")
-    public abstract static class User implements Entity, UserRelations {
+    public static class User implements Entity {
 
         public User() {}
 
@@ -54,35 +49,40 @@ public class OrmTest {
             userName = username;
         }
 
+        void getScores(final Session session, final QueryListener<Score> listener) {
+            RelationBuilder.forEntity(this).remote(User.class).query(session, listener);
+        }
+
     }
 
     @Table(name="scores")
     public static class Score implements Entity {
 
-        interface Relationships {
-            @Relation(User.class)
-            public void getUser(FetchListener<User> listener);
-        }
-
         public Score() {}
 
         @Column(primaryKey = true)
         private long id = -1;
-        private Date date;
+        @Column(nullable = false)
         private int score;
+        @Column
+        private Date date = new Date();
 
         @Column(foreignKey = User.class)
         private long userId;
 
+        public Score(final User user, int score) {
+            userId = user.getId();
+            this.score = score;
+        }
+
+        public void getUser(final Session session, final FetchListener<User> listener) {
+            RelationBuilder.forEntity(this).remote(User.class).get(session, listener);
+        }
 
     }
 
-
-    android.content.Context context;
-
     @Test
     public void testSchemaBuilder() throws Exception {
-
         final String sql = SchemaBuilder.renderCreateTable(User.class);
 
     }
@@ -93,6 +93,7 @@ public class OrmTest {
         Database.attach(Score.class);
         Database db = Database.getInstance(Robolectric.application, "test.db", 1);
         db.getWritableDatabase();
+        Database.release();
     }
 
     @Test
@@ -100,9 +101,9 @@ public class OrmTest {
         Database.attach(User.class);
         Database.attach(Score.class);
         Database db = Database.getInstance(Robolectric.application, "test.db", 1);
-        db.getWritableDatabase();
+
         final Session session = db.createSession();
-        final User u = Session.create(User.class);
+        final User u = new User("foo");
         session.add(u);
         session.commit();
 
@@ -133,6 +134,8 @@ public class OrmTest {
 
         session.delete(u);
         session.commit();
+
+        Database.release();
     }
 
     @Test
@@ -148,8 +151,45 @@ public class OrmTest {
     }
 
     @Test
-    public void testRelations() throws Exception {
+    public void testRelationBuilder() throws Exception {
 
+        Database.attach(User.class);
+        Database.attach(Score.class);
+        Database.release();
+        Database db = Database.getInstance(Robolectric.application, "test.db", 1);
+        db.getWritableDatabase();
+
+        final Session session = db.createSession();
+
+        final User u = new User("foo");
+        session.add(u);
+
+        session.commit();
+
+        Score s = null;
+        for (int i=0; i<20; i++) {
+            s = new Score(u, i * 100);
+            session.add(s);
+        }
+
+        session.commit();
+
+        RelationBuilder.forEntity(u).remote(Score.class).query(session, new QueryListener<Score>() {
+            @Override
+            public void onResult(final List<Score> scores) {
+                Log.d(TAG, "found %d scores", scores.size());
+            }
+        });
+
+        RelationBuilder.forEntity(s).remote(User.class).get(session, new FetchListener<User>() {
+            @Override
+            public void onResult(final User user) {
+                Log.d(TAG, "found user %s", user.getUserName());
+            }
+        });
+
+
+        Database.release();
     }
 
 }
