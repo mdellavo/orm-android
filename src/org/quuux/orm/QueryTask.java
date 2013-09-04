@@ -92,6 +92,8 @@ public class QueryTask<T extends Entity> extends AsyncTask<Object, Void, List<T>
                     f.setByte(rv, cursor.getBlob(colIndex)[0]);
                 } else if (type == Void.class || type == void.class) {
                     f.set(rv, cursor.getBlob(colIndex));
+                } else if (type.isEnum()) {
+                    f.set(rv, Enum.valueOf((Class<? extends Enum>)type, cursor.getString(colIndex)));
                 }
             }
         } catch (final InstantiationException e) {

@@ -45,6 +45,7 @@ public class SchemaBuilder {
         typeMap.put(Short.class, SqlType.INTEGER);
         typeMap.put(short.class, SqlType.INTEGER);
         typeMap.put(Date.class, SqlType.TEXT);
+        typeMap.put(Enum.class, SqlType.TEXT);
     }
 
     public static Table getTable(final Class<? extends Entity> entity) {
@@ -165,7 +166,7 @@ public class SchemaBuilder {
     }
 
     public static SqlType mapType(final Field field) {
-        return typeMap.get(field.getType());
+        return typeMap.get(field.getType().isEnum() ? Enum.class : field.getType());
     }
 
     public static String renderDropTable(Class<? extends Entity> entity) {
@@ -297,10 +298,15 @@ public class SchemaBuilder {
 
             f.setAccessible(true);
 
-                if (isAutoincrement(f) && getAutoincrementValue(e, f) <= 0){
+                if (isAutoincrement(f) && getAutoincrementValue(e, f) <= 0) {
                     args.add(null);
                 } else {
-                    args.add(getValue(e, f).toString());
+                    Object value = getValue(e, f);
+
+                    if (value != null && value instanceof Boolean)
+                        value = ((Boolean)value) ? 1 : 0;
+
+                    args.add(value != null ? value.toString() : null);
                 }
         }
 

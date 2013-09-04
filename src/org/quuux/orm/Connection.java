@@ -12,6 +12,7 @@ import java.util.Arrays;
 public class Connection {
 
     private static final String TAG = "org.quuux.orm.Connection";
+    private static final boolean LOG_SQL = false;
     private final SQLiteDatabase mDatabase;
 
     private boolean mInTransaction = false;
@@ -29,9 +30,11 @@ public class Connection {
     }
 
     private void log(final String sql, final String[] args) {
-        Log.d(TAG, "SQL -> " + sql);
-        if (args != null)
-            Log.d(TAG, "Args -> " + Arrays.toString(args));
+        if (LOG_SQL) {
+            Log.d(TAG, "SQL -> " + sql);
+            if (args != null)
+                Log.d(TAG, "Args -> " + Arrays.toString(args));
+        }
     }
 
     public Cursor query(final String sql, final String[] args) {

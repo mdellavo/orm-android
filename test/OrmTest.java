@@ -1,4 +1,3 @@
-import android.content.Context;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,7 +49,7 @@ public class OrmTest {
         }
 
         void getScores(final Session session, final QueryListener<Score> listener) {
-            RelationBuilder.forEntity(this).remote(User.class).query(session, listener);
+            RelationBuilder.forEntity(this).other(User.class).query(session, listener);
         }
 
     }
@@ -76,7 +75,7 @@ public class OrmTest {
         }
 
         public void getUser(final Session session, final FetchListener<User> listener) {
-            RelationBuilder.forEntity(this).remote(User.class).get(session, listener);
+            RelationBuilder.forEntity(this).other(User.class).get(session, listener);
         }
 
     }
@@ -174,14 +173,14 @@ public class OrmTest {
 
         session.commit();
 
-        RelationBuilder.forEntity(u).remote(Score.class).query(session, new QueryListener<Score>() {
+        RelationBuilder.forEntity(u).other(Score.class).query(session, new QueryListener<Score>() {
             @Override
             public void onResult(final List<Score> scores) {
                 Log.d(TAG, "found %d scores", scores.size());
             }
         });
 
-        RelationBuilder.forEntity(s).remote(User.class).get(session, new FetchListener<User>() {
+        RelationBuilder.forEntity(s).other(User.class).get(session, new FetchListener<User>() {
             @Override
             public void onResult(final User user) {
                 Log.d(TAG, "found user %s", user.getUserName());

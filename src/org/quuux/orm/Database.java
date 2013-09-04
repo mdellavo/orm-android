@@ -51,7 +51,7 @@ public class Database extends SQLiteOpenHelper {
     private void initializeDatabase(final SQLiteDatabase db) {
         Log.d(TAG, "initializing database...");
 
-        final Connection conn = Connection.openWritable(this);
+        final Connection conn = new Connection(db);
 
         conn.beginTransaction();
         dropAll(conn, db, sEntities);
@@ -87,12 +87,10 @@ public class Database extends SQLiteOpenHelper {
     public static Database getInstance(final Context context, final String name, final int version) {
         if (instance == null) {
             instance = new Database(context, name, version);
-            instance.getWritableDatabase();
         }
 
         return instance;
     }
-
 
     public static void release() {
         instance = null;

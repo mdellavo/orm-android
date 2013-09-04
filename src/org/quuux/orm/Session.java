@@ -21,7 +21,7 @@ public class Session {
 
     public Query query(final Class<? extends Entity> klass) {
         if (isDirty())
-            flush();
+            flush(null);
 
         return new Query(this, klass);
     }
@@ -43,23 +43,21 @@ public class Session {
         return mPendingInsertion.size() > 0 || mPendingDeletion.size() > 0;
     }
 
-    public void commit() {
+    public void commit(final FlushListener listener) {
         if (isDirty()) {
-            mConnection.beginTransaction();
-            flush();
-            mConnection.commit();
+            flush(listener);
+        } else {
+            listener.onFlushed();
         }
     }
 
-    public void flush() {
-        for (final Entity e : mPendingDeletion) {
-            mConnection.delete(e);
-        }
-        mPendingDeletion.clear();
+    public void commit() {
+        commit(null);
+    }
 
-        for (final Entity e : mPendingInsertion) {
-             mConnection.replace(e);
-        }
-        mPendingInsertion.clear();
+    public void flush(final FlushListener listener) {
+        new FlushTask(mConnection, listener).execute(mPendingDeletion, mPendingInsertion);
+        mPendingDeletion = new ArrayList<Entity>();
+        mPendingInsertion = new ArrayList<Entity>();
     }
 }

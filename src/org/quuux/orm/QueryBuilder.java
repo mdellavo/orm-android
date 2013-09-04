@@ -16,9 +16,14 @@ public class QueryBuilder implements Clause {
 
     public QueryBuilder() {}
 
-    public QueryBuilder(final Object... clauses) {
+    public QueryBuilder(final Operator operator, final Object... clauses) {
+        mOperator = operator;
         for (final Object clause : clauses)
             add(clause);
+    }
+
+    public QueryBuilder(final Object... clauses) {
+        this(Operator.AND, clauses);
     }
 
     public QueryBuilder add(final Object object) {
