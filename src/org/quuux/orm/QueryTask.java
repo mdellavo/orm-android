@@ -24,7 +24,7 @@ public class QueryTask<T extends Entity> extends AsyncTask<Object, Void, List<T>
 
     private Cursor query() {
         final String sql = mQuery.toSql();
-        final String[] args = mQuery.getSelectionArgs() != null && mQuery.getSelectionArgs().length > 0 ? gatherArgs(mQuery.getSelectionArgs()) : null;
+        final String[] args = mQuery.getSelectionArgs() != null && mQuery.getSelectionArgs().length > 0 ? SchemaBuilder.flattenArgs(mQuery.getSelectionArgs()) : null;
         return mConnection.query(sql, args);
     }
 
@@ -42,6 +42,8 @@ public class QueryTask<T extends Entity> extends AsyncTask<Object, Void, List<T>
                     rv.add(e);
             } while(cursor.moveToNext());
         }
+
+        cursor.close();
 
         return rv;
     }
@@ -105,13 +107,7 @@ public class QueryTask<T extends Entity> extends AsyncTask<Object, Void, List<T>
         return rv;
     }
 
-    private String[] gatherArgs(final Object[] selectionArgs) {
-        final String[] rv = new String[selectionArgs.length];
-        for(int i=0; i<selectionArgs.length; i++) {
-            rv[i] = String.valueOf(selectionArgs[i]);
-        }
-        return rv;
-    }
+
 
 
 }

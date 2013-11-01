@@ -161,6 +161,10 @@ public class SchemaBuilder {
         return s != null && !EMPTY.equals(s);
     }
 
+    private static boolean notEmpty(final Clause c) {
+        return notEmpty(c != null ? c.toSql() : null);
+    }
+
     private static void append(final StringBuilder sb, final String fmt, final Object... args) {
         sb.append(String.format(fmt, args));
     }
@@ -313,6 +317,14 @@ public class SchemaBuilder {
         return args.toArray(new String[args.size()]);
     }
 
+    public static String[] flattenArgs(final Object[] selectionArgs) {
+        final String[] rv = new String[selectionArgs.length];
+        for(int i=0; i<selectionArgs.length; i++) {
+            rv[i] = String.valueOf(selectionArgs[i]);
+        }
+        return rv;
+    }
+
     public static String renderGetLastInsertId(final Class<? extends Entity> entity) {
         return String.format("SELECT ROWID from %s ORDER BY ROWID DESC LIMIT 1", getTable(entity).name());
     }
@@ -348,28 +360,33 @@ public class SchemaBuilder {
     }
 
     public static String renderQuery(final Query query) {
-        final Field[] fields = query.getEntity().getDeclaredFields();
         final Table table = getTable(query.getEntity());
 
         final StringBuilder sb = new StringBuilder();
-
         sb.append("SELECT ");
 
-        for(int i=0; i<fields.length; i++) {
-            if (!isColumn(fields[i]))
-                continue;
+        if (query.getProjection() == null) {
+            final Field[] fields = query.getEntity().getDeclaredFields();
+            for(int i=0; i<fields.length; i++) {
+                if (!isColumn(fields[i]))
+                    continue;
 
-            sb.append(getColumnName(fields[i]));
-            if (i<fields.length-1)
-                sb.append(", ");
+                sb.append(getColumnName(fields[i]));
+                if (i<fields.length-1)
+                    sb.append(", ");
+            }
+
+        } else {
+            sb.append(query.getProjection().toSql());
         }
+
 
         sb.append(" FROM ");
         sb.append(table.name());
 
         if (notEmpty(query.getSelection())) {
             sb.append(" WHERE ");
-            sb.append(query.getSelection());
+            sb.append(query.getSelection().toSql());
         }
 
         if (notEmpty(query.getOrderBy())) {

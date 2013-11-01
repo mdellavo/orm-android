@@ -12,7 +12,7 @@ import java.util.Arrays;
 public class Connection {
 
     private static final String TAG = "org.quuux.orm.Connection";
-    private static final boolean LOG_SQL = false;
+    private static final boolean LOG_SQL = true;
     private final SQLiteDatabase mDatabase;
 
     private boolean mInTransaction = false;
@@ -29,17 +29,18 @@ public class Connection {
         return !mDatabase.isReadOnly();
     }
 
-    private void log(final String sql, final String[] args) {
+    private void log(final String sql, long time, final String[] args) {
         if (LOG_SQL) {
-            Log.d(TAG, "SQL -> " + sql);
-            if (args != null)
-                Log.d(TAG, "Args -> " + Arrays.toString(args));
+            Log.d(TAG, String.format("SQL: %d ms :  %s (%s) ", time, sql, args != null ? Arrays.toString(args) : ""));
         }
     }
 
     public Cursor query(final String sql, final String[] args) {
-        log(sql, args);
-        return mDatabase.rawQuery(sql, args);
+        final long t1 = System.currentTimeMillis();
+        final Cursor rv = mDatabase.rawQuery(sql, args);
+        final long t2 = System.currentTimeMillis();
+        log(sql, t2 - t1, args);
+        return rv;
     }
 
     public Cursor query(final String sql) {
@@ -48,13 +49,17 @@ public class Connection {
 
 
     public void exec(final String sql, final String[] args) {
-        log(sql, args);
+        final long t1 = System.currentTimeMillis();
         mDatabase.execSQL(sql, args);
+        final long t2 = System.currentTimeMillis();
+        log(sql, t2 - t1, args);
     }
 
     public void exec(final String sql) {
-        log(sql, null);
+        final long t1 = System.currentTimeMillis();
         mDatabase.execSQL(sql);
+        final long t2 = System.currentTimeMillis();
+        log(sql, t2 - t1, null);
     }
 
     public void commit() {
