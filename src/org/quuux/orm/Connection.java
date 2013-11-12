@@ -66,7 +66,8 @@ public class Connection {
         if (!mInTransaction)
             throw new IllegalStateException("Commit not in transaction!");
 
-        exec("COMMIT;");
+        mDatabase.setTransactionSuccessful();
+        mDatabase.endTransaction();
         mInTransaction = false;
     }
 
@@ -74,7 +75,7 @@ public class Connection {
         if (!mInTransaction)
             throw new IllegalStateException("Commit not in transaction!");
 
-        exec("ROLLBACK;");
+        mDatabase.endTransaction();
         mInTransaction = false;
     }
 
@@ -84,7 +85,7 @@ public class Connection {
             throw new IllegalStateException("Starting a new transaction while in a transaction!");
 
         mInTransaction = true;
-        exec("BEGIN TRANSACTION;");
+        mDatabase.beginTransactionNonExclusive();
     }
 
     public boolean isInTransaction() {

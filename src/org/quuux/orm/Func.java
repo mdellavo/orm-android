@@ -1,5 +1,6 @@
 package org.quuux.orm;
 
+// yuck  - how do AND OR NOT work
 public class Func extends Literal {
 
     public Func(final String name, final Object... args) {
@@ -7,4 +8,5 @@ public class Func extends Literal {
     }
 
     public static Func COUNT = new Func("COUNT(*)");
+
 }

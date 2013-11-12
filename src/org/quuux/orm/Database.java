@@ -20,6 +20,7 @@ public class Database extends SQLiteOpenHelper {
 
     protected Database(final Context context, final String name, final int version) {
         super(context, name, null, version);
+        setWriteAheadLoggingEnabled(true);
     }
 
     public static void attach(final Class<? extends Entity> klass) {

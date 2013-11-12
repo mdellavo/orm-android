@@ -3,7 +3,7 @@ package org.quuux.orm;
 import android.database.Cursor;
 import android.os.AsyncTask;
 
-public class ScalarTask extends AsyncTask<Void, Void, Long> {
+public class ScalarTask extends AsyncTask<Class, Void, Object> {
 
 
     private final Query mQuery;
@@ -22,15 +22,45 @@ public class ScalarTask extends AsyncTask<Void, Void, Long> {
         return mConnection.query(sql, args);
     }
 
-
     @Override
-    protected Long doInBackground(final Void... params) {
+    protected Object doInBackground(final Class... params) {
         final Cursor cursor = query();
-        return cursor.moveToFirst() ? cursor.getLong(0) : -1;
+
+        if (!cursor.moveToFirst())
+            return null;
+
+        Class klass = params[0];
+
+        Object rv = null;
+        if (klass == Boolean.class || klass == boolean.class) {
+            rv = cursor.getInt(0);
+        } else if(klass == Integer.class || klass == int.class) {
+           rv = cursor.getInt(0);
+        } else if (klass == Long.class || klass == long.class) {
+            rv = cursor.getLong(0);
+        } else if (klass == Float.class || klass == float.class) {
+            rv = cursor.getFloat(0);
+        } else if (klass == Double.class || klass == double.class) {
+            rv = cursor.getDouble(0);
+        } else if (klass == Character.class || klass == char.class) {
+            rv = cursor.getString(0).charAt(0);
+        } else if (klass == String.class) {
+            rv = cursor.getString(0);
+        } else if (klass == Short.class || klass == short.class) {
+            rv = cursor.getShort(0);
+        } else if(klass == Byte.class || klass == byte.class) {
+            rv = cursor.getBlob(0)[0];
+        } else if (klass == Void.class || klass == void.class) {
+            rv = cursor.getBlob(0);
+        } else if (klass.isEnum()) {
+            rv = Enum.valueOf((Class<? extends Enum>)klass, cursor.getString(0));
+        }
+
+        return rv;
     }
 
     @Override
-    protected void onPostExecute(final Long count) {
+    protected void onPostExecute(final Object count) {
         super.onPostExecute(count);
         if (mListener != null)
             mListener.onResult(count);

@@ -10,45 +10,23 @@ TODO
  - Build out query and some query builder utils (func stuff)
  - Clean up and refactor SchemaBuilder
  - Serializer, deserializer interface
- 
+
+ - Query Task refactor
+     continue refactor of query task so can use it as a generic query interface
+
+ - Query cache for inserts
+   - keep a query cache of compiled sql
+
  - Figure out mapper.
-   
-   Are we doing something analagous? 
+   New annotation @MappedQuery which implements the Mappable interface (wip).
+
+   Need to factor out some column set abstraction
+
+   interface Mappable {
+       Query buildMappingQuery()
+   }
 
  - Relations
-   - see: http://square.github.io/retrofit/
-
-   Mapped classes are abstract where abstract annotated
-   getters that take a Query/Fetch lisener. Object will be proxied, if
-   an abstract getter is invoked, fetch and call listener. 
-
-   abstract class Score implements Entity {
-
-       @Column(primaryKey=true)
-       Private int id;
-       private date;  
-       private int score;
-      
-       @Column(foreignKey=User.class, useList=false)
-       private int userId;
-
-       @Relation(User.class)
-       public abstract void getUser(FetchListener<User> listener);              
-      
-       ...
-   }
-   
-   abstract class User implements Entity {
-   
-       @Column(primaryKey=true)
-       private int id;
-       private String name;
-
-       @Relation(Score.class)
-       public abstract void getScores(QueryListener<Score> listener);
-
-       ...
-   }
-
+   Document, See test for now
 
  - Actual unit tests (ie - not just using junit as a test harness for a smoke test)

@@ -22,16 +22,28 @@ public class QueryTask<T extends Entity> extends AsyncTask<Object, Void, List<T>
         mListener = listener;
     }
 
+    @Override
+    protected List<T> doInBackground(Object... params) {
+        final Cursor cursor = query();
+        final List<T> rv = process(cursor);
+        cursor.close();
+        return rv;
+    }
+
+    @Override
+    protected void onPostExecute(List<T> result) {
+        if (mListener != null) {
+            mListener.onResult(result);
+        }
+    }
+
     private Cursor query() {
         final String sql = mQuery.toSql();
         final String[] args = mQuery.getSelectionArgs() != null && mQuery.getSelectionArgs().length > 0 ? SchemaBuilder.flattenArgs(mQuery.getSelectionArgs()) : null;
         return mConnection.query(sql, args);
     }
 
-    @Override
-    protected List<T> doInBackground(Object... params) {
-        final Cursor cursor = query();
-
+    private List<T> process(final Cursor cursor) {
         List<T> rv = null;
         if (cursor.moveToFirst()) {
             rv = new ArrayList<T>();
@@ -42,17 +54,7 @@ public class QueryTask<T extends Entity> extends AsyncTask<Object, Void, List<T>
                     rv.add(e);
             } while(cursor.moveToNext());
         }
-
-        cursor.close();
-
         return rv;
-    }
-
-    @Override
-    protected void onPostExecute(List<T> result) {
-        if (mListener != null) {
-            mListener.onResult(result);
-        }
     }
 
     private T hydrate(final Cursor cursor) {
@@ -74,6 +76,7 @@ public class QueryTask<T extends Entity> extends AsyncTask<Object, Void, List<T>
 
                 f.setAccessible(true);
 
+                // FIXME this is ugly, we should use an interface
                 if (type == Boolean.class || type == boolean.class) {
                     f.setBoolean(rv, cursor.getInt(colIndex) != 0);
                 } else if(type == Integer.class || type == int.class) {

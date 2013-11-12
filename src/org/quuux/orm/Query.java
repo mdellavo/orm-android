@@ -80,7 +80,7 @@ public class Query implements Clause {
 
     public Query filter(final String selection, final Object... args) {
         final Query rv = new Query(this);
-        rv.mSelection = new Literal(selection);
+        rv.mSelection = new Literal(selection); // FIXME this needs to be AND'd
         rv.mSelectionArgs = args;
         return rv;
     }
@@ -124,6 +124,10 @@ public class Query implements Clause {
         return rv;
     }
 
+    public void count(ScalarListener<Long> listener) {
+        count().scalar(Long.class, listener);
+    }
+
     public int getOffset() {
         return mOffset;
     }
@@ -136,12 +140,8 @@ public class Query implements Clause {
         new QueryTask(mSession.getConnection(), this, listener).execute();
     }
 
-    public void count(final CountListener listener) {
-        new CountTask(mSession.getConnection(), this, listener).execute();
-    }
-
-    public void scalar(final ScalarListener listener) {
-        new ScalarTask(mSession.getConnection(), this, listener).execute();
+    public <T> void scalar(Class<T> klass, final ScalarListener<T> listener) {
+        new ScalarTask(mSession.getConnection(), this, listener).execute(klass);
     }
 
     public String toSql() {
