@@ -7,9 +7,9 @@ public class FetchTask<T> extends QueryTask {
         super(connection, query.limit(1), new QueryListener<T>() {
             @Override
             public void onResult(final List<T> result) {
-                if (result != null && result.size() > 0)
-                    if (listener != null)
-                        listener.onResult(result.get(0));
+                T rv = result != null && result.size() > 0 ? result.get(0) : null;
+                if (listener != null)
+                    listener.onResult(rv);
             }
         });
     }

@@ -2,9 +2,11 @@ package org.quuux.orm;
 
 import android.content.Context;
 
-public class Query implements Clause {
+import java.io.Serializable;
 
-    protected final Session mSession;
+public class Query implements Clause, Serializable {
+
+    protected transient final Session mSession;
     protected final Class<? extends Entity> mEntity;
 
     protected Clause mProjection;
@@ -20,17 +22,25 @@ public class Query implements Clause {
 
     public Query(final Query other) {
         this(other.mSession, other.mEntity);
+        copyOf(other);
+    }
+
+    public Query(final Session session, final Query other) {
+        this(session, other.getEntity());
+        copyOf(other);
+    }
+
+    public Class<? extends Entity> getEntity() {
+        return mEntity;
+    }
+
+    private void copyOf(final Query other) {
         mProjection = other.mProjection;
         mSelection = other.mSelection;
         mSelectionArgs = other.mSelectionArgs;
         mOrderBy = other.mOrderBy;
         mLimit = other.mLimit;
         mOffset = other.mOffset;
-        
-    }
-
-    public Class<? extends Entity> getEntity() {
-        return mEntity;
     }
 
     // FIXME this needs to take a fetch listener and fetch
@@ -42,6 +52,14 @@ public class Query implements Clause {
         first(listener);
 
         return rv;
+    }
+
+    public boolean isBound() {
+        return mSession != null;
+    }
+
+    public Query bind(final Session session) {
+        return new Query(session, this);
     }
 
     public  Clause getProjection() {

@@ -39,7 +39,7 @@ public abstract class QueryAdapter<T extends Entity> extends BaseAdapter impleme
     }
 
     @Override
-    public Object getItem(final int position) {
+    public T getItem(final int position) {
         return mItems.get(position);
     }
 
@@ -54,6 +54,18 @@ public abstract class QueryAdapter<T extends Entity> extends BaseAdapter impleme
         final View rv  = convertView == null ? newView(mContext, item, parent) : convertView;
         bindView(mContext, item, rv, parent);
         return rv;
+    }
+
+    public int getPositionForItem(final T obj) {
+        int i = 0;
+        for(T item : mItems) {
+            if (obj == item)
+                return i;
+
+            i++;
+        }
+
+        return -1;
     }
 
     protected abstract View newView(final Context context, final T item, final ViewGroup parent);

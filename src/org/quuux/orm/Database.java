@@ -84,7 +84,6 @@ public class Database extends SQLiteOpenHelper {
         conn.exec(sql);
     }
 
-
     public static Database getInstance(final Context context, final String name, final int version) {
         if (instance == null) {
             instance = new Database(context, name, version);

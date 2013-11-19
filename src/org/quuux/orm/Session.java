@@ -19,6 +19,10 @@ public class Session {
         return mConnection;
     }
 
+    public Query bind(final Query query) {
+        return new Query(this, query);
+    }
+
     public Query query(final Class<? extends Entity> klass) {
         if (isDirty())
             flush(null);
@@ -47,7 +51,8 @@ public class Session {
         if (isDirty()) {
             flush(listener);
         } else {
-            listener.onFlushed();
+            if (listener != null)
+                listener.onFlushed();
         }
     }
 
