@@ -1,7 +1,18 @@
 package org.quuux.orm;
 
+import android.os.AsyncTask;
+import android.os.Build;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Session {
 
@@ -11,8 +22,11 @@ public class Session {
     private List<Entity> mPendingInsertion = new ArrayList<Entity>();
     private List<Entity> mPendingDeletion = new ArrayList<Entity>();
 
+    private Executor mExecutor;
+
     protected  Session(final Connection connection) {
         mConnection = connection;
+        mExecutor = Executors.newSingleThreadExecutor();
     }
 
     public Connection getConnection() {
@@ -61,8 +75,21 @@ public class Session {
     }
 
     public void flush(final FlushListener listener) {
-        new FlushTask(mConnection, listener).execute(mPendingDeletion, mPendingInsertion);
+        final AsyncTask task = new FlushTask(mConnection, listener).executeOnExecutor(mExecutor, mPendingDeletion, mPendingInsertion);
         mPendingDeletion = new ArrayList<Entity>();
         mPendingInsertion = new ArrayList<Entity>();
     }
+
+    public Executor getExecutor() {
+        return mExecutor;
+    }
+
+    public void execute(final AsyncTask task, Object... args) {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+            task.executeOnExecutor(mExecutor, args);
+        else
+            task.execute(args);
+    }
+
 }

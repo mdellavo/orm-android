@@ -1,6 +1,7 @@
 package org.quuux.orm;
 
 import android.content.Context;
+import android.os.AsyncTask;
 
 import java.io.Serializable;
 
@@ -12,7 +13,7 @@ public class Query implements Clause, Serializable {
     protected Clause mProjection;
     protected Clause mSelection;
     protected Object[] mSelectionArgs;
-    protected String mOrderBy;
+    protected Clause mOrderBy;
     protected int mLimit, mOffset;
    
     public Query(final Session session, Class<? extends Entity> klass) {
@@ -103,13 +104,17 @@ public class Query implements Clause, Serializable {
         return rv;
     }
 
-    public Query orderBy(final String orderBy) {
+    public Query orderBy(final Clause orderBy) {
         final Query rv = new Query(this);
         rv.mOrderBy = orderBy;
         return rv;
     }
 
-    public String getOrderBy() {
+    public Query orderBy(final String orderBy) {
+        return orderBy(new Literal(orderBy));
+    }
+
+    public Clause getOrderBy() {
         return mOrderBy;
     }
 
@@ -142,7 +147,7 @@ public class Query implements Clause, Serializable {
         return rv;
     }
 
-    public void count(ScalarListener<Long> listener) {
+    public void count(final ScalarListener<Long> listener) {
         count().scalar(Long.class, listener);
     }
 
@@ -151,19 +156,22 @@ public class Query implements Clause, Serializable {
     }
 
     public void first(final FetchListener<? extends Entity> listener) {
-        new FetchTask(mSession.getConnection(), this, listener).execute();
+        mSession.execute(new FetchTask(mSession.getConnection(), this, listener));
     }
 
     public void all(final QueryListener<? extends Entity> listener) {
-        new QueryTask(mSession.getConnection(), this, listener).execute();
+        mSession.execute(new QueryTask(mSession.getConnection(), this, listener));
     }
 
     public <T> void scalar(Class<T> klass, final ScalarListener<T> listener) {
-        new ScalarTask(mSession.getConnection(), this, listener).execute(klass);
+        new ScalarTask(mSession.getConnection(), this, listener).executeOnExecutor(mSession.getExecutor(), klass);
     }
 
     public String toSql() {
         return SchemaBuilder.renderQuery(this);
     }
 
+    public void delete(final ScalarListener<Long> listener) {
+        mSession.execute(new DeleteTask(mSession.getConnection(), this, listener));
+    }
 }

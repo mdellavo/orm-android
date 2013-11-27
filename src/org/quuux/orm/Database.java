@@ -3,6 +3,7 @@ package org.quuux.orm;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -20,7 +21,9 @@ public class Database extends SQLiteOpenHelper {
 
     protected Database(final Context context, final String name, final int version) {
         super(context, name, null, version);
-        setWriteAheadLoggingEnabled(true);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+            setWriteAheadLoggingEnabled(true);
     }
 
     public static void attach(final Class<? extends Entity> klass) {

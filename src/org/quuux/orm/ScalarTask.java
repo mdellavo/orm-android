@@ -3,6 +3,7 @@ package org.quuux.orm;
 import android.database.Cursor;
 import android.os.AsyncTask;
 
+
 public class ScalarTask extends AsyncTask<Class, Void, Object> {
 
 
@@ -20,6 +21,14 @@ public class ScalarTask extends AsyncTask<Class, Void, Object> {
         final String sql = mQuery.toSql();
         final String[] args = mQuery.getSelectionArgs() != null && mQuery.getSelectionArgs().length > 0 ? SchemaBuilder.flattenArgs(mQuery.getSelectionArgs()) : null;
         return mConnection.query(sql, args);
+    }
+
+    protected Connection getConnection() {
+        return mConnection;
+    }
+
+    protected Query getQuery() {
+        return mQuery;
     }
 
     @Override

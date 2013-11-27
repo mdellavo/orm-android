@@ -1,6 +1,8 @@
 package org.quuux.orm;
 
-public class Literal implements Clause {
+import java.io.Serializable;
+
+public class Literal implements Clause, Serializable {
     private String mClause;
 
     public Literal(final String clause) {

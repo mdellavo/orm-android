@@ -8,5 +8,6 @@ public class Func extends Literal {
     }
 
     public static Func COUNT = new Func("COUNT(*)");
+    public static Func RANDOM = new Func("RANDOM()");
 
 }

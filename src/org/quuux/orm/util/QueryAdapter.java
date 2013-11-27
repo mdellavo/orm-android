@@ -13,7 +13,7 @@ import java.util.List;
 public abstract class QueryAdapter<T extends Entity> extends BaseAdapter implements QueryListener<T>, AbsListView.OnScrollListener {
     private static final String TAG = Log.buildTag(QueryAdapter.class);
 
-    private static final int PAGE_SIZE = 20;
+    private static final int PAGE_SIZE = 100;
     private static final int LOOKAHEAD = 10;
 
     final Context mContext;
@@ -46,6 +46,18 @@ public abstract class QueryAdapter<T extends Entity> extends BaseAdapter impleme
     @Override
     public long getItemId(final int position) {
         return position;
+    }
+
+    public boolean add(final T item) {
+        return mItems.add(item);
+    }
+
+    public void add(final int position, final T item) {
+         mItems.add(position, item);
+    }
+
+    public boolean remove(final T item) {
+        return mItems.remove(item);
     }
 
     @Override

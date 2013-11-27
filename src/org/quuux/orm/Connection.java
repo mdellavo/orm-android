@@ -2,6 +2,7 @@ package org.quuux.orm;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.util.Log;
 
 import java.util.Arrays;
@@ -138,6 +139,13 @@ public class Connection {
         // FIXME wipe PK/autoincrement?
 
         return rv;
+    }
+
+    public long delete(final Query q) {
+        final String sql = SchemaBuilder.renderDelete(q);
+        final String[] args = SchemaBuilder.flattenArgs(q.getSelectionArgs());
+        exec(sql, args);
+        return getRowsAffected();
     }
 
 }

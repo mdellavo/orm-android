@@ -340,6 +340,16 @@ public class SchemaBuilder {
         return String.format("DELETE FROM %s WHERE %s = ?", table.name(), columnName);
     }
 
+    public static String renderDelete(final Query q) {
+        final Class<? extends Entity> e = q.getEntity();
+        final Table table = getTable(e);
+        final Field field = getPrimaryKey(e);
+        final String columnName = getColumnName(field);
+        q.setProjection(columnName);
+        return String.format("DELETE FROM %s WHERE %s IN (%s)", table.name(), columnName, renderQuery(q));
+    }
+
+
     public static Field getPrimaryKey(final Class<? extends Entity> entity) {
         final Field[] fields = entity.getDeclaredFields();
         for (final Field f : fields) {
@@ -391,7 +401,7 @@ public class SchemaBuilder {
 
         if (notEmpty(query.getOrderBy())) {
             sb.append(" ORDER BY ");
-            sb.append(query.getOrderBy());
+            sb.append(query.getOrderBy().toSql());
         }
 
         if (query.getLimit() > 0) {
