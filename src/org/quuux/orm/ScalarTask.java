@@ -35,10 +35,12 @@ public class ScalarTask extends AsyncTask<Class, Void, Object> {
     protected Object doInBackground(final Class... params) {
         final Cursor cursor = query();
 
-        if (!cursor.moveToFirst())
+        if (!cursor.moveToFirst()) {
+            cursor.close();
             return null;
+        }
 
-        Class klass = params[0];
+        final Class klass = params[0];
 
         Object rv = null;
         if (klass == Boolean.class || klass == boolean.class) {
@@ -64,6 +66,8 @@ public class ScalarTask extends AsyncTask<Class, Void, Object> {
         } else if (klass.isEnum()) {
             rv = Enum.valueOf((Class<? extends Enum>)klass, cursor.getString(0));
         }
+
+        cursor.close();
 
         return rv;
     }

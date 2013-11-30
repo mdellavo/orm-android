@@ -172,6 +172,6 @@ public class Query implements Clause, Serializable {
     }
 
     public void delete(final ScalarListener<Long> listener) {
-        mSession.execute(new DeleteTask(mSession.getConnection(), this, listener));
+        new DeleteTask(mSession.getConnection(), this, listener).executeOnExecutor(mSession.getExecutor(), Long.class);
     }
 }
