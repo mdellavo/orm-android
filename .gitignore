@@ -5,3 +5,5 @@ gen
 .idea
 local.properties
 build.xml
+build
+.gradle
