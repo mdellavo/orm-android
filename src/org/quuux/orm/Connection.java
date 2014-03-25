@@ -1,9 +1,12 @@
 package org.quuux.orm;
 
+import android.annotation.TargetApi;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.util.Log;
+
+import junit.runner.Version;
 
 import java.util.Arrays;
 
@@ -80,13 +83,18 @@ public class Connection {
         mInTransaction = false;
     }
 
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     public void beginTransaction() {
 
         if (mInTransaction)
             throw new IllegalStateException("Starting a new transaction while in a transaction!");
 
         mInTransaction = true;
-        mDatabase.beginTransactionNonExclusive();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+            mDatabase.beginTransactionNonExclusive();
+        else
+            mDatabase.beginTransaction();
     }
 
     public boolean isInTransaction() {

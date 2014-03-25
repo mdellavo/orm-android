@@ -1,7 +1,9 @@
 package org.quuux.orm;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Build;
 
 import java.io.Serializable;
 
@@ -147,31 +149,41 @@ public class Query implements Clause, Serializable {
         return rv;
     }
 
-    public void count(final ScalarListener<Long> listener) {
-        count().scalar(Long.class, listener);
+    public ScalarTask count(final ScalarListener<Long> listener) {
+        return count().scalar(Long.class, listener);
     }
 
     public int getOffset() {
         return mOffset;
     }
 
-    public void first(final FetchListener<? extends Entity> listener) {
-        mSession.execute(new FetchTask(mSession.getConnection(), this, listener));
+    public FetchTask<? extends Entity> first(final FetchListener<? extends Entity> listener) {
+        final FetchTask<? extends Entity> t = new FetchTask(mSession.getConnection(), this, listener);
+        mSession.execute(t);
+        return t;
     }
 
-    public void all(final QueryListener<? extends Entity> listener) {
-        mSession.execute(new QueryTask(mSession.getConnection(), this, listener));
+    public QueryTask<? extends Entity> all(final QueryListener<? extends Entity> listener) {
+        final QueryTask<? extends Entity> t = new QueryTask(mSession.getConnection(), this, listener);
+        mSession.execute(t);
+        return t;
     }
 
-    public <T> void scalar(Class<T> klass, final ScalarListener<T> listener) {
-        new ScalarTask(mSession.getConnection(), this, listener).executeOnExecutor(mSession.getExecutor(), klass);
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    public <T> ScalarTask scalar(Class<T> klass, final ScalarListener<T> listener) {
+        final ScalarTask t = new ScalarTask(mSession.getConnection(), this, listener);
+        mSession.execute(t, klass);
+        return t;
     }
 
     public String toSql() {
         return SchemaBuilder.renderQuery(this);
     }
 
-    public void delete(final ScalarListener<Long> listener) {
-        new DeleteTask(mSession.getConnection(), this, listener).executeOnExecutor(mSession.getExecutor(), Long.class);
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    public DeleteTask delete(final ScalarListener<Long> listener) {
+        final DeleteTask t = new DeleteTask(mSession.getConnection(), this, listener);
+        mSession.execute(t);
+        return t;
     }
 }

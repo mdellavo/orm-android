@@ -23,7 +23,8 @@ public class FlushTask extends AsyncTask<List<Entity>, Void, Void> {
         final List<Entity> pendingDeletion = params[0];
         final List<Entity> pendingInsertion = params[1];
 
-        mConnection.beginTransaction();
+        if (!mConnection.isInTransaction())
+            mConnection.beginTransaction();
 
         for (final Entity e : pendingDeletion) {
             mConnection.delete(e);

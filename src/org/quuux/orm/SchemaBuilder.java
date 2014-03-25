@@ -68,14 +68,26 @@ public class SchemaBuilder {
         return isColumn(field) ? field.getAnnotation(Column.class) : null;
     }
 
-    public static Field findForeignKey(final Class<? extends Entity> entity, final Class<? extends Entity> foreign) {
+    public static Field[] getColumnFields(final Class<? extends Entity> entity) {
+
+        final List<Field> rv = new ArrayList<Field>();
+
         final Field[] fields = entity.getDeclaredFields();
 
         for (int i = 0; i<fields.length; i++) {
             final Field field = fields[i];
-
             if (!isColumn(field))
                 continue;
+            rv.add(field);
+        }
+        return rv.toArray(new Field[rv.size()]);
+    }
+
+    public static Field findForeignKey(final Class<? extends Entity> entity, final Class<? extends Entity> foreign) {
+        final Field[] fields = getColumnFields(entity);
+
+        for (int i = 0; i<fields.length; i++) {
+            final Field field = fields[i];
 
             final Column column = getColumn(field);
 
@@ -90,16 +102,13 @@ public class SchemaBuilder {
         final StringBuilder sb = new StringBuilder();
 
         final Table table = getTable(entity);
-        final Field[] fields = entity.getDeclaredFields();
+        final Field[] fields = getColumnFields(entity);
 
-        append(sb, "CREATE TABLE IF NOT EXISTS %s (", table.name());
+        append(sb, "CREATE TABLE IF NOT EXISTS \"%s\" (", table.name());
         sb.append("\n");
 
         for (int i = 0; i<fields.length; i++) {
             final Field field = fields[i];
-
-            if (!isColumn(field))
-                continue;
 
             sb.append("    ");
             sb.append(renderColumn(field));
@@ -121,7 +130,9 @@ public class SchemaBuilder {
 
         final StringBuilder sb = new StringBuilder();
 
+        sb.append("\"");
         sb.append(getColumnName(field));
+        sb.append("\"");
         sb.append(" ");
         sb.append(type.name());
 
@@ -175,10 +186,13 @@ public class SchemaBuilder {
 
     public static String renderDropTable(Class<? extends Entity> entity) {
         final Table table = getTable(entity);
-        return String.format("DROP TABLE IF EXISTS %s;\n", table.name());
+        return String.format("DROP TABLE IF EXISTS \"%s\";\n", table.name());
     }
 
     private static boolean isAutoincrement(final Field f) {
+        if (f == null)
+            return false;
+
         final Column column = getColumn(f);
         final SqlType type = mapType(f);
 
@@ -186,7 +200,7 @@ public class SchemaBuilder {
     }
 
     private static Field getAutoincrement(final Class<? extends Entity> entity) {
-        final Field[] fields = entity.getDeclaredFields();
+        final Field[] fields = getColumnFields(entity);
 
         for(final Field f: fields) {
             if (isAutoincrement(f))
@@ -252,20 +266,21 @@ public class SchemaBuilder {
     public static String renderReplace(final Entity e) {
 
         final Table table = getTable(e.getClass());
-        final Field[] fields = e.getClass().getDeclaredFields();
+        final Field[] fields = getColumnFields(e.getClass());
 
         final StringBuilder sb = new StringBuilder();
 
         sb.append("INSERT OR REPLACE INTO ");
+        sb.append("\"");
         sb.append(table.name());
+        sb.append("\"");
         sb.append("(");
 
         for (int i=0; i<fields.length; i++) {
 
-            if (!isColumn(fields[i]))
-                continue;
-
+            sb.append("\"");
             sb.append(getColumnName(fields[i]));
+            sb.append("\"");
 
             if (i<fields.length-1)
                 sb.append(", ");
@@ -276,9 +291,6 @@ public class SchemaBuilder {
         sb.append(" VALUES (");
 
         for (int i=0; i<fields.length; i++) {
-
-            if (!isColumn(fields[i]))
-                continue;
 
             sb.append("?");
             if (i<fields.length-1)
@@ -293,25 +305,22 @@ public class SchemaBuilder {
     public static String[] gatherArgs(final Entity e) {
         final List<String> args = new ArrayList<String>();
 
-        final Field[] fields = e.getClass().getDeclaredFields();
+        final Field[] fields = getColumnFields(e.getClass());
 
         for (final Field f : fields) {
 
-            if (!isColumn(f))
-                continue;
-
             f.setAccessible(true);
 
-                if (isAutoincrement(f) && getAutoincrementValue(e, f) <= 0) {
-                    args.add(null);
-                } else {
-                    Object value = getValue(e, f);
+            if (isAutoincrement(f) && getAutoincrementValue(e, f) <= 0) {
+                args.add(null);
+            } else {
+                Object value = getValue(e, f);
 
-                    if (value != null && value instanceof Boolean)
-                        value = ((Boolean)value) ? 1 : 0;
+                if (value != null && value instanceof Boolean)
+                    value = ((Boolean)value) ? 1 : 0;
 
-                    args.add(value != null ? value.toString() : null);
-                }
+                args.add(value != null ? value.toString() : null);
+            }
         }
 
         return args.toArray(new String[args.size()]);
@@ -337,7 +346,7 @@ public class SchemaBuilder {
         final Table table = getTable(e);
         final Field field = getPrimaryKey(e);
         final String columnName = getColumnName(field);
-        return String.format("DELETE FROM %s WHERE %s = ?", table.name(), columnName);
+        return String.format("DELETE FROM %s WHERE \"%s\" = ?", table.name(), columnName);
     }
 
     public static String renderDelete(final Query q) {
@@ -346,12 +355,12 @@ public class SchemaBuilder {
         final Field field = getPrimaryKey(e);
         final String columnName = getColumnName(field);
         q.setProjection(columnName);
-        return String.format("DELETE FROM %s WHERE %s IN (%s)", table.name(), columnName, renderQuery(q));
+        return String.format("DELETE FROM \"%s\" WHERE %s IN (%s)", table.name(), columnName, renderQuery(q));
     }
 
 
     public static Field getPrimaryKey(final Class<? extends Entity> entity) {
-        final Field[] fields = entity.getDeclaredFields();
+        final Field[] fields = getColumnFields(entity);
         for (final Field f : fields) {
             final Column column = getColumn(f);
             if (column.primaryKey())
@@ -376,12 +385,12 @@ public class SchemaBuilder {
         sb.append("SELECT ");
 
         if (query.getProjection() == null) {
-            final Field[] fields = query.getEntity().getDeclaredFields();
+            final Field[] fields = getColumnFields(query.getEntity());
             for(int i=0; i<fields.length; i++) {
-                if (!isColumn(fields[i]))
-                    continue;
-
+                sb.append("\"");
                 sb.append(getColumnName(fields[i]));
+                sb.append("\"");
+
                 if (i<fields.length-1)
                     sb.append(", ");
             }
@@ -392,7 +401,9 @@ public class SchemaBuilder {
 
 
         sb.append(" FROM ");
+        sb.append("\"");
         sb.append(table.name());
+        sb.append("\"");
 
         if (notEmpty(query.getSelection())) {
             sb.append(" WHERE ");
@@ -420,7 +431,9 @@ public class SchemaBuilder {
     public static String renderGetClause(final Class<? extends Entity> mEntity) {
         final Field primaryKey = getPrimaryKey(mEntity);
         final StringBuilder sb = new StringBuilder();
+        sb.append("\"");
         sb.append(getColumnName(primaryKey));
+        sb.append("\"");
         sb.append(" = ?");
         return sb.toString();
     }

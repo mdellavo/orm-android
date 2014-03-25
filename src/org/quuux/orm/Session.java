@@ -1,11 +1,13 @@
 package org.quuux.orm;
 
+import android.annotation.TargetApi;
 import android.os.AsyncTask;
 import android.os.Build;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -61,35 +63,59 @@ public class Session {
         return mPendingInsertion.size() > 0 || mPendingDeletion.size() > 0;
     }
 
-    public void commit(final FlushListener listener) {
+    public FlushTask commit(final FlushListener listener) {
+
         if (isDirty()) {
-            flush(listener);
+            return flush(listener);
         } else {
             if (listener != null)
                 listener.onFlushed();
         }
+
+        return null;
     }
 
-    public void commit() {
-        commit(null);
+    public FlushTask commit() {
+        return commit(null);
     }
 
-    public void flush(final FlushListener listener) {
-        final AsyncTask task = new FlushTask(mConnection, listener).executeOnExecutor(mExecutor, mPendingDeletion, mPendingInsertion);
-        mPendingDeletion = new ArrayList<Entity>();
-        mPendingInsertion = new ArrayList<Entity>();
+    public FlushTask flush(final FlushListener listener) {
+
+
+        final FlushListener listenerDelegate = new FlushListener() {
+
+            @Override
+            public void onFlushed() {
+                if (listener != null)
+                    listener.onFlushed();
+            }
+        };
+
+        final List<Entity> pendingDeletion = new ArrayList<Entity>();
+        pendingDeletion.addAll(mPendingDeletion);
+        mPendingDeletion.clear();
+
+        final List<Entity> pendingInsertion = new ArrayList<Entity>();
+        pendingInsertion.addAll(mPendingInsertion);
+        mPendingInsertion.clear();
+
+        final FlushTask t = new FlushTask(mConnection, listenerDelegate);
+        execute(t, pendingDeletion, pendingInsertion);
+        return t;
     }
 
-    public Executor getExecutor() {
-        return mExecutor;
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    public <Param, Progress, Result> void execute(final AsyncTask<Param, Progress, Result> task, Param... args) {
+
+        try {
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+                task.executeOnExecutor(mExecutor, args);
+            else
+                task.execute(args);
+        } catch (final Exception e) {
+            Log.e(TAG, "failed to execute query", e);
+        }
+
     }
-
-    public void execute(final AsyncTask task, Object... args) {
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-            task.executeOnExecutor(mExecutor, args);
-        else
-            task.execute(args);
-    }
-
 }

@@ -35,6 +35,8 @@ public class ScalarTask extends AsyncTask<Class, Void, Object> {
     protected Object doInBackground(final Class... params) {
         final Cursor cursor = query();
 
+        Log.d("XXX", "num rows = %s", cursor.getCount());
+
         if (!cursor.moveToFirst()) {
             cursor.close();
             return null;

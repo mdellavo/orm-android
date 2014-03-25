@@ -10,7 +10,11 @@ import org.quuux.orm.*;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class QueryAdapter<T extends Entity> extends BaseAdapter implements QueryListener<T>, AbsListView.OnScrollListener {
+public abstract class QueryAdapter<T extends Entity>
+        extends BaseAdapter
+        implements QueryListener<T>,
+                   AbsListView.OnScrollListener {
+    
     private static final String TAG = Log.buildTag(QueryAdapter.class);
 
     private static final int PAGE_SIZE = 100;
@@ -94,14 +98,12 @@ public abstract class QueryAdapter<T extends Entity> extends BaseAdapter impleme
     public void onResult(final List<T> result) {
 
         if (result != null) {
-
             if (result.size() > 0) {
                 mItems.addAll(result);
             }
             mHasMore = result.size() == PAGE_SIZE;
 
             Log.d(TAG, "loaded %d items (total = %d, hasMore = %s)", result.size(), mItems.size(), mHasMore);
-
         }
 
         notifyDataSetChanged();

@@ -37,7 +37,7 @@ public class RelationBuilder {
 
         final Field primaryKey = SchemaBuilder.getPrimaryKey(reversed ? mLocal.getClass() : mOther);
         final String columnName =  SchemaBuilder.getColumnName(reversed ? SchemaBuilder.getPrimaryKey(mOther) : foreignKey);
-        final String selection = String.format("%s = ?", columnName);
+        final String selection = String.format("\"%s\" = ?", columnName);
         return query.filter(selection, reversed ? SchemaBuilder.getValue(mLocal, foreignKey) : SchemaBuilder.getPrimaryKeyValue(mLocal));
     }
 
