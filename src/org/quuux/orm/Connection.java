@@ -16,7 +16,7 @@ import java.util.Arrays;
 public class Connection {
 
     private static final String TAG = "org.quuux.orm.Connection";
-    private static final boolean LOG_SQL = true;
+    private static final boolean LOG_SQL = false;
     private final SQLiteDatabase mDatabase;
 
     private boolean mInTransaction = false;

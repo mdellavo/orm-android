@@ -17,7 +17,7 @@ public abstract class QueryAdapter<T extends Entity>
     
     private static final String TAG = Log.buildTag(QueryAdapter.class);
 
-    private static final int PAGE_SIZE = 100;
+    private static final int PAGE_SIZE = 20;
     private static final int LOOKAHEAD = 10;
 
     final Context mContext;
@@ -74,6 +74,7 @@ public abstract class QueryAdapter<T extends Entity>
 
     public int getPositionForItem(final T obj) {
         int i = 0;
+
         for(T item : mItems) {
             if (obj == item)
                 return i;
@@ -98,27 +99,36 @@ public abstract class QueryAdapter<T extends Entity>
     public void onResult(final List<T> result) {
 
         if (result != null) {
-            if (result.size() > 0) {
+
+            if (result.size() > 0)
                 mItems.addAll(result);
-            }
+
             mHasMore = result.size() == PAGE_SIZE;
+            if (!mHasMore)
+                onLoadComplete();
 
             Log.d(TAG, "loaded %d items (total = %d, hasMore = %s)", result.size(), mItems.size(), mHasMore);
+            notifyDataSetChanged();
         }
-
-        notifyDataSetChanged();
 
         mLoading = false;
     }
 
+    protected void onLoadComplete() {
+    }
+
+    public void continueLoading() {
+        Log.d(TAG, "continue loading...");
+        mHasMore = true;
+        loadPage();
+    }
+
     @Override
     public void onScrollStateChanged(final AbsListView view, final int scrollState) {
-        //Log.d(TAG, "onScrollStateChanged(state=%s)", scrollState);
     }
 
     @Override
     public void onScroll(final AbsListView view, final int firstVisibleItem, final int visibleItemCount, final int totalItemCount) {
-        //Log.d(TAG, "onScroll(firstVisibleItem=%s, visibleItemCount=%s, totalItemCount=%s)", firstVisibleItem, visibleItemCount, totalItemCount);
         if (mHasMore && !mLoading && firstVisibleItem + visibleItemCount > totalItemCount - LOOKAHEAD) {
             loadPage();
         }

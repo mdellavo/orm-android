@@ -81,7 +81,6 @@ public class Session {
 
     public FlushTask flush(final FlushListener listener) {
 
-
         final FlushListener listenerDelegate = new FlushListener() {
 
             @Override
