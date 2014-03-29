@@ -4,7 +4,8 @@ public class Log  {
 
     private static String sPrefix;
 
-
+    private static final boolean doLog = true;
+    
     public static void setsPrefix(final String prefix) {
         sPrefix = prefix;
     }
@@ -19,37 +20,37 @@ public class Log  {
     }
 
     public static void d(final String tag, final String message, final Object...args) {
-        if (BuildConfig.DEBUG) {
+        if (doLog) {
             android.util.Log.d(buildTag(tag), String.format(message, args));
         }
     }
 
     public static void d(final String tag, final String message, final Throwable tr,  Object...args) {
-        if (BuildConfig.DEBUG) {
+        if (doLog) {
             android.util.Log.d(buildTag(tag), String.format(message, args), tr);
         }
     }
 
     public static void v(final String tag, final String message, final Object...args) {
-        if (BuildConfig.DEBUG) {
+        if (doLog) {
             android.util.Log.v(buildTag(tag), String.format(message, args));
         }
     }
 
     public static void v(final String tag, final String message, final Throwable tr,  Object...args) {
-        if (BuildConfig.DEBUG) {
+        if (doLog) {
             android.util.Log.v(buildTag(tag), String.format(message, args), tr);
         }
     }
 
     public static void i(final String tag, final String message, final Object...args) {
-        if (BuildConfig.DEBUG) {
+        if (doLog) {
             android.util.Log.i(buildTag(tag), String.format(message, args));
         }
     }
 
     public static void i(final String tag, final String message, final Throwable tr,  Object...args) {
-        if (BuildConfig.DEBUG) {
+        if (doLog) {
             android.util.Log.i(buildTag(tag), String.format(message, args), tr);
         }
     }

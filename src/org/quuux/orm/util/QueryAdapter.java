@@ -24,8 +24,8 @@ public abstract class QueryAdapter<T extends Entity>
     final Query mQuery;
     final List<T> mItems = new LinkedList<T>();
 
-    private boolean mHasMore = true;
     private boolean mLoading = false;
+    private long mTotal;
 
     public QueryAdapter(final Context context,final Query query) {
         mContext = context;
@@ -64,6 +64,10 @@ public abstract class QueryAdapter<T extends Entity>
         return mItems.remove(item);
     }
 
+    public int getPageSize() {
+        return PAGE_SIZE;
+    }
+
     @Override
     public View getView(final int position, final View convertView, final ViewGroup parent) {
         final T item = (T)getItem(position);
@@ -89,10 +93,22 @@ public abstract class QueryAdapter<T extends Entity>
 
     protected abstract void bindView(final Context context, final T item, final View view, final ViewGroup parent);
 
-    protected void loadPage() {
+    public void loadPage() {
         mLoading = true;
-        mQuery.limit(PAGE_SIZE, mItems.size()).all(this);
-        Log.d(TAG , "loading page @ offset = %d", mItems.size());
+
+        mQuery.count(new ScalarListener<Long>() {
+            @Override
+            public void onResult(final Long count) {
+                mTotal = count;
+
+                if (hasMore()) {
+                    final int pageSize = getPageSize();
+                    final int offset = mItems.size();
+                    mQuery.limit(pageSize, offset).all(QueryAdapter.this);
+                }
+            }
+        });
+
     }
 
     @Override
@@ -102,36 +118,32 @@ public abstract class QueryAdapter<T extends Entity>
 
             if (result.size() > 0) {
 
-                boolean dirty = false;
                 for (final T item : result) {
                     if (!mItems.contains(item)) {
-                        dirty = true;
                         mItems.add(item);
                     }
                 }
 
-                if (dirty)
-                    notifyDataSetChanged();
+                notifyDataSetChanged();
             }
-
-            mHasMore = result.size() == PAGE_SIZE;
-            if (!mHasMore)
-                onLoadComplete();
-
-            Log.d(TAG, "loaded %d items (total = %d, hasMore = %s)", result.size(), mItems.size(), mHasMore);
         }
 
+        onLoadComplete();
+
         mLoading = false;
+    }
+
+    public long getTotal() {
+        return mTotal;
+    }
+
+    public boolean hasMore() {
+        return mTotal > mItems.size();
     }
 
     protected void onLoadComplete() {
     }
 
-    public void continueLoading() {
-        Log.d(TAG, "continue loading...");
-        mHasMore = true;
-        loadPage();
-    }
 
     @Override
     public void onScrollStateChanged(final AbsListView view, final int scrollState) {
@@ -139,7 +151,7 @@ public abstract class QueryAdapter<T extends Entity>
 
     @Override
     public void onScroll(final AbsListView view, final int firstVisibleItem, final int visibleItemCount, final int totalItemCount) {
-        if (mHasMore && !mLoading && firstVisibleItem + visibleItemCount > totalItemCount - LOOKAHEAD) {
+        if (hasMore() && !mLoading && firstVisibleItem + visibleItemCount > totalItemCount - LOOKAHEAD) {
             loadPage();
         }
     }
