@@ -81,15 +81,6 @@ public class Session {
 
     public FlushTask flush(final FlushListener listener) {
 
-        final FlushListener listenerDelegate = new FlushListener() {
-
-            @Override
-            public void onFlushed() {
-                if (listener != null)
-                    listener.onFlushed();
-            }
-        };
-
         final List<Entity> pendingDeletion = new ArrayList<Entity>();
         pendingDeletion.addAll(mPendingDeletion);
         mPendingDeletion.clear();
@@ -98,7 +89,7 @@ public class Session {
         pendingInsertion.addAll(mPendingInsertion);
         mPendingInsertion.clear();
 
-        final FlushTask t = new FlushTask(mConnection, listenerDelegate);
+        final FlushTask t = new FlushTask(mConnection, listener);
         execute(t, pendingDeletion, pendingInsertion);
         return t;
     }

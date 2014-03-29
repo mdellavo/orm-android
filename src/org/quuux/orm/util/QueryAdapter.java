@@ -100,15 +100,25 @@ public abstract class QueryAdapter<T extends Entity>
 
         if (result != null) {
 
-            if (result.size() > 0)
-                mItems.addAll(result);
+            if (result.size() > 0) {
+
+                boolean dirty = false;
+                for (final T item : result) {
+                    if (!mItems.contains(item)) {
+                        dirty = true;
+                        mItems.add(item);
+                    }
+                }
+
+                if (dirty)
+                    notifyDataSetChanged();
+            }
 
             mHasMore = result.size() == PAGE_SIZE;
             if (!mHasMore)
                 onLoadComplete();
 
             Log.d(TAG, "loaded %d items (total = %d, hasMore = %s)", result.size(), mItems.size(), mHasMore);
-            notifyDataSetChanged();
         }
 
         mLoading = false;
